@@ -3,16 +3,16 @@ package com.waylonbrown.stockpile;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.gson.Gson;
+
 /**
  * Created by waylon.brown on 9/30/15.
  *
- * SharedPreferences on steroids.
- *
- * flexible for storing values, flex for retrieveing by making default optional
- * store objects
+ * A more flexible SharedPreferences with less boilerplate and the ability to store and retrieve objects using Gson.
  *
  */
 public class StockPile {
+
     private static final String PREFS_KEY = "prefs_key";
     private static SharedPreferences prefs;
     private static final IllegalStateException exception =
@@ -43,6 +43,8 @@ public class StockPile {
             editor.putInt(key, (int)object);
         } else if(object instanceof Long){
             editor.putLong(key, (long)object);
+        } else {
+            editor.putString(key, toGsonString(object));
         }
 
         if(asynchronous){
@@ -51,6 +53,11 @@ public class StockPile {
         } else {
             return editor.commit();
         }
+    }
+
+    private static String toGsonString(Object object) {
+        Gson gson = new Gson();
+        return gson.toJson(object);
     }
 
     public static String getString(String key){
@@ -69,9 +76,14 @@ public class StockPile {
         return getInt(key, 0);
     }
 
-
     public static long getLong(String key){
         return getLong(key, 0L);
+    }
+
+    public static Object getObject(String key, Class<?> cls){
+        Gson gson = new Gson();
+        String objectJson = prefs.getString(key, "");
+        return gson.fromJson(objectJson, cls);
     }
 
     public static String getString(String key, String defaultVal){
